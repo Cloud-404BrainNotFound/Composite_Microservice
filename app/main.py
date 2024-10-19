@@ -20,6 +20,7 @@ app = FastAPI()
 
 app.middleware("http")(logging_dependency)
 
+
 # 这是一个router的示例
 app.include_router(user_router, prefix="/users", tags=["users"])
 
