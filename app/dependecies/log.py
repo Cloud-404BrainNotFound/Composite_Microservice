@@ -1,19 +1,19 @@
 import logging
-from logging.handlers import RotatingFileHandler
+from datetime import datetime
 from pathlib import Path
-
 
 def setup_logger():
     log_dir = Path("logs")
     log_dir.mkdir(exist_ok=True)
 
-    logger = logging.getLogger("fastapi_logger")
+    logger = logging.getLogger("service_logger")
     logger.setLevel(logging.INFO)
 
-    file_handler = RotatingFileHandler(
-        "logs/fastapi.log",
-        maxBytes=10 * 1024 * 1024,
-        backupCount=5,
+    current_date = datetime.now().strftime("%Y-%m-%d")
+    log_file = f"logs/{current_date}.log"
+
+    file_handler = logging.FileHandler(
+        log_file,
         encoding='utf-8'
     )
 

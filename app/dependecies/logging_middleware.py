@@ -3,7 +3,7 @@ import logging
 from fastapi import Request
 from typing import Callable
 
-logger = logging.getLogger("fastapi_logger")
+logger = logging.getLogger("service_logger")
 
 
 async def logging_dependency(request: Request, call_next: Callable):
