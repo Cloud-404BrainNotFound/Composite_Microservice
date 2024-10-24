@@ -1,0 +1,14 @@
+[Unit]
+Description=My Microservice
+After=network.target
+
+[Service]
+User=ubuntu
+# 指定虚拟环境中的 Python 解释器
+ExecStart=/home/ubuntu/solo_deployment/venv/bin/python -m uvicorn app.main:app --host 0.0.0.0 --port 8004
+Restart=always
+# 设置环境变量，如果您的应用需要
+WorkingDirectory=/home/ubuntu/solo_deployment/Composite_Microservice
+
+[Install]
+WantedBy=multi-user.target

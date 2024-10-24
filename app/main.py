@@ -9,4 +9,4 @@ app = FastAPI()
 
 app.middleware("http")(logging_dependency)
 
-app.include_router(order_router, prefix="/orders", tags=["orders"])
+app.include_router(order_router)
