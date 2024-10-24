@@ -5,7 +5,7 @@ local = 0
 if local:
     BASE_URL = "http://127.0.0.1:8000"
 else:
-    BASE_URL = "http://54.237.161.55:8004"
+    BASE_URL = "http://54.237.161.55:8000"
 
 def test_create_stringing_order():
     order_data = {
@@ -78,7 +78,7 @@ def test_delete_order(order_id="fefc7837-fc6e-49b5-93ce-005d09f5f7a2"):
 
 def run_all_tests():
     print("===== Starting API Tests =====")
-    order_id = '10002cd0-3f34-4481-a0b3-2a0cdb4920fd'
+    order_id = '565c7269-4490-40fa-a45f-f6e27002e844'
     try:
         print("\nTesting Get All Orders...")
         test_get_all_orders()
