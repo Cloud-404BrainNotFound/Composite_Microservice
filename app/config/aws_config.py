@@ -19,3 +19,7 @@ cw_handler = watchtower.CloudWatchLogHandler(
     stream_name="api-logs",
     boto3_client=boto_sess.client('logs')
 )
+
+# Add after the existing CloudWatch configuration
+sqs_client =boto_sess.client('sqs')
+SQS_QUEUE_URL = config['aws']['sqs_queue_url']

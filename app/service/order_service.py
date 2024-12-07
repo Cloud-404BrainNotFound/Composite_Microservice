@@ -2,6 +2,9 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks
 import httpx
 import configparser
 from typing import Optional
+from datetime import datetime
+import json
+from app.config.aws_config import sqs_client, SQS_QUEUE_URL
 
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -72,3 +75,37 @@ async def create_order(order_data: dict):
 def get_order_sync(order_id: str):
     print(f"{order_service_url}/orders/{order_id}")
     return make_sync_request("GET", f"{order_service_url}/orders/{order_id}")
+
+@order_router.post("/orders/finish/{order_id}")
+async def finish_order(order_id: str, order_details: dict):
+    # Prepare message for SQS
+    message = {
+        "event_type": "order_completed", 
+        "order_id": order_id,
+        "timestamp": datetime.now().isoformat()
+    }
+    
+    try:
+        # Send message to SQS
+        response = sqs_client.send_message(
+            QueueUrl=SQS_QUEUE_URL,
+            MessageBody=json.dumps(message),
+            MessageAttributes={
+                'event_type': {
+                    'DataType': 'String',
+                    'StringValue': 'order_completed'
+                }
+            }
+        )
+        
+        return {
+            "message": "Order completion notification queued",
+            "order_id": order_id,
+            "sqs_message_id": response['MessageId']
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to queue order completion notification: {str(e)}"
+        )

@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.config.log import setup_logger
-from app.dependecies.logging_middleware import logging_dependency
+from app.config.cloudwatch_logger import setup_cloudwatch_logger
 from app.service.order_service import order_router
-
-logger = setup_logger()
+from app.dependencies.logging_middleware import logging_dependency
+service_name = "composite-service"
+logger = setup_cloudwatch_logger(service_name)
 
 app = FastAPI()
 
