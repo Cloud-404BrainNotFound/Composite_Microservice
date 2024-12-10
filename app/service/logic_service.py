@@ -39,7 +39,9 @@ def make_sync_request(method: str, url: str, **kwargs):
 
 # Weather endpoint
 @logic_router.get("/weather")
-async def get_ny_weather(current_user: dict = Depends(get_current_user)):
+async def get_ny_weather(
+    # current_user: dict = Depends(get_current_user)
+    ):
     """Get current weather in New York City"""
     api_key = config['openweather']['api_key']
     city_id = config['openweather']['city_id']
@@ -161,8 +163,9 @@ async def finish_order(
 
 @logic_router.get("/available-options")
 async def get_available_options(
-    
+    # current_user: dict = Depends(get_current_user)
 ):
+    # print(current_user)
     """Get available options for stringing orders"""
     available_options = {
         "sports": [

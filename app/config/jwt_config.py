@@ -3,6 +3,7 @@ from typing import Optional
 from fastapi import HTTPException, Security, Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 import jwt
+from jwt import exceptions
 import configparser
 
 # Read config.ini
@@ -50,9 +51,9 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Security(securi
             "role": payload.get("role")
         }
         
-    except jwt.ExpiredSignatureError:
+    except exceptions.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Token has expired")
-    except jwt.JWTError as e:
+    except exceptions.PyJWTError as e:
         raise HTTPException(status_code=401, detail=f"Could not validate credentials: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Authentication error: {str(e)}") 
