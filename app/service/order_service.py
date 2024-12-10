@@ -57,7 +57,7 @@ async def get_order(order_id: str):
 
 @order_router.post('/order_stringing')
 async def create_order_stringing(order_data: dict):
-    return await make_request("POST", f"{order_service_url}/order_stringing", json=order_data)
+    return await make_request("POST", f"{order_service_url}/orders/order_stringing", json=order_data)
 
 @order_router.delete("/orders/{order_id}")
 async def delete_order(order_id: str):
