@@ -13,8 +13,12 @@ def get_correlation_id():
     return correlation_id_ctx_var.get()
 
 async def logging_dependency(request: Request, call_next: Callable):
-    # Generate a unique correlation ID for this request
-    correlation_id = str(uuid.uuid4())
+    # Check if correlation ID exists in request headers
+    correlation_id = request.headers.get("x-correlation-id")
+    if not correlation_id:
+        # Generate a new correlation ID only if not present
+        correlation_id = str(uuid.uuid4())
+    
     correlation_id_ctx_var.set(correlation_id)
     
     start_time = time.time()

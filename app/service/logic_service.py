@@ -1,6 +1,7 @@
 import httpx
 import configparser
 from fastapi import APIRouter, HTTPException
+import traceback
 
 # Read config
 config = configparser.ConfigParser()
@@ -12,10 +13,9 @@ logic_router = APIRouter(prefix="/logic")
 async def get_ny_weather():
     """Get current weather in New York City"""
     api_key = config['openweather']['api_key']
-    base_url = config['openweather']['base_url']
     city_id = config['openweather']['city_id']
     
-    url = f"{base_url}/weather?id={city_id}&appid={api_key}&units=metric"
+    url = f"https://api.openweathermap.org/data/2.5/weather?id={city_id}&appid={api_key}&units=metric"
     
     async with httpx.AsyncClient() as client:
         try:
@@ -36,6 +36,7 @@ async def get_ny_weather():
                 detail="Failed to fetch weather data from OpenWeather API"
             )
         except Exception as e:
+            print(traceback.format_exc())
             raise HTTPException(
                 status_code=500,
                 detail=f"Internal server error: {str(e)}"
