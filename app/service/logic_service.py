@@ -69,8 +69,7 @@ async def get_orders_route(
     sport: Optional[str] = None,
     order_status: Optional[str] = None,
     skip: Optional[int] = 0,
-    limit: Optional[int] = 10,
-    current_user: dict = Depends(get_current_user)
+    limit: Optional[int] = 10
 ):
     params = {
         "sport": sport,
@@ -83,45 +82,39 @@ async def get_orders_route(
 
 @logic_router.get("/orders/{order_id}")
 async def get_order(
-    order_id: str,
-    current_user: dict = Depends(get_current_user)
+    order_id: str
 ):
     print(f"{order_service_url}orders/{order_id}")
     return await make_request("GET", f"{order_service_url}/orders/{order_id}")
 
 @logic_router.post('/order_stringing')
 async def create_order_stringing(
-    order_data: dict,
-    current_user: dict = Depends(get_current_user)
+    order_data: dict
 ):
     return await make_request("POST", f"{order_service_url}/order_stringing", json=order_data)
 
 @logic_router.delete("/orders/{order_id}")
 async def delete_order(
-    order_id: str,
-    current_user: dict = Depends(get_current_user)
+    order_id: str
 ):
     return await make_request("DELETE", f"{order_service_url}/orders/{order_id}")
 
 @logic_router.put("/orders/{order_id}")
 async def update_order(
     order_id: str,
-    order_data: dict,
-    current_user: dict = Depends(get_current_user)
+    order_data: dict
 ):
     return await make_request("PUT", f"{order_service_url}/orders/{order_id}", json=order_data)
 
 @logic_router.post("/orders")
 async def create_order(
-    order_data: dict,
-    current_user: dict = Depends(get_current_user)
+    order_data: dict
 ):
     return await make_request("POST", f"{order_service_url}/orders/", json=order_data)
 
 @logic_router.get("/orders/sync/{order_id}")
 def get_order_sync(
-    order_id: str,
-    current_user: dict = Depends(get_current_user)
+    order_id: str
 ):
     print(f"{order_service_url}/orders/{order_id}")
     return make_sync_request("GET", f"{order_service_url}/orders/{order_id}")
@@ -129,8 +122,7 @@ def get_order_sync(
 @logic_router.post("/orders/finish/{order_id}")
 async def finish_order(
     order_id: str,
-    order_details: dict,
-    current_user: dict = Depends(get_current_user)
+    order_details: dict
 ):
     message = {
         "event_type": "order_completed", 
@@ -219,8 +211,7 @@ async def get_available_options(
 @logic_router.post("/submit-order")
 async def submit_order(
     order_data: dict,
-    payment_data: dict,
-    current_user: dict = Depends(get_current_user)
+    payment_data: dict
 ):
     """
     Submit an order with payment information
