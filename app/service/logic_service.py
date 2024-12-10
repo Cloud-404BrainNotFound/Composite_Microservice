@@ -161,7 +161,7 @@ async def finish_order(
 
 @logic_router.get("/available-options")
 async def get_available_options(
-    current_user: dict = Depends(get_current_user)
+    
 ):
     """Get available options for stringing orders"""
     available_options = {
