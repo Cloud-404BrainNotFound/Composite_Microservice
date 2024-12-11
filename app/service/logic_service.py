@@ -14,6 +14,7 @@ config.read('config.ini')
 
 logic_router = APIRouter(prefix='/composite')
 order_service_url = config['services']['order']
+review_service_url = config['services']['review']
 
 async def make_request(method: str, url: str, **kwargs):
     async with httpx.AsyncClient() as client:
@@ -119,14 +120,15 @@ def get_order_sync(
     print(f"{order_service_url}/orders/{order_id}")
     return make_sync_request("GET", f"{order_service_url}/orders/{order_id}")
 
-@logic_router.post("/orders/finish/{order_id}")
+@logic_router.post("/orders/finish")
 async def finish_order(
-    order_id: str,
-    order_details: dict
+    user_id: str,
+    order_details: dict = None
 ):
+    """Queue order completion notification with user ID"""
     message = {
         "event_type": "order_completed", 
-        "order_id": order_id,
+        "user_id": user_id,
         "timestamp": datetime.now().isoformat()
     }
     
@@ -143,7 +145,7 @@ async def finish_order(
         
         return {
             "message": "Order completion notification queued",
-            "order_id": order_id,
+            "user_id": user_id,
             "sqs_message_id": response['MessageId']
         }
         
@@ -208,51 +210,126 @@ async def get_available_options(
     }
     return available_options
 
-@logic_router.post("/submit-order")
-async def submit_order(
-    order_data: dict,
-    payment_data: dict
+
+@logic_router.post("/orders/user/{user_id}")
+async def create_user_order(
+    user_id: str,
+    order_data: dict
 ):
-    """
-    Submit an order with payment information
-    """
+    """Create a new stringing order for a specific user and queue completion notification"""
     try:
-        # Add payment info to extras and set status to completed
-        order_data["extras"] = {
-            "payment": {
-                "card_number": payment_data.get("card_number"),
-                "expiry_month": payment_data.get("expiry_month"),
-                "expiry_year": payment_data.get("expiry_year"),
-                "payment_date": datetime.now().isoformat()
-            }
-        }
-        order_data["order_status"] = "completed"
-        
         # Create the order
-        created_order = await make_request(
+        order_response = await make_request(
             "POST", 
-            f"{order_service_url}/orders/", 
+            f"{order_service_url}/order_stringing/user/{user_id}", 
             json=order_data
         )
         
-        # Send completion notification to SQS
-        await finish_order(
-            order_id=created_order["id"],
-            order_details={
-                "payment_processed": True,
-                "completion_date": datetime.now().isoformat()
-            }
-        )
+        # Queue the completion notification
+        await finish_order(user_id=user_id)
         
-        return {
-            "message": "Order submitted successfully",
-            "order_id": created_order["id"],
-            "status": "completed"
-        }
+        return order_response
         
     except Exception as e:
         print(traceback.format_exc())
         raise HTTPException(
             status_code=500,
-            detail=f"Failed to submit order: {str(e)}"
+            detail=f"Failed to create order: {str(e)}"
         )
+
+@logic_router.get("/orders/user/{user_id}")
+async def get_user_orders(
+    user_id: str,
+    skip: Optional[int] = 0,
+    limit: Optional[int] = 10
+):
+    """Get all orders for a specific user"""
+    params = {
+        "skip": skip,
+        "limit": limit
+    }
+    try:
+        return await make_request(
+            "GET",
+            f"{order_service_url}/orders/user/{user_id}",
+            params=params
+        )
+    except Exception as e:
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch user orders: {str(e)}"
+        )
+
+@logic_router.get("/orders/{order_id}")
+async def get_order_details(order_id: str):
+    """Get details of a specific order"""
+    try:
+        return await make_request(
+            "GET",
+            f"{order_service_url}/orders/{order_id}"
+        )
+    except Exception as e:
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch order details: {str(e)}"
+        )
+
+@logic_router.get("/reviews/order/{order_id}")
+async def get_order_reviews(
+    order_id: str
+):
+    """Get all reviews for a specific order"""
+    try:
+        return await make_request(
+            "GET",
+            f"{review_service_url}/reviews/target/{order_id}"
+        )
+    except Exception as e:
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch order reviews: {str(e)}"
+        )
+
+@logic_router.post("/reviews/order")
+async def create_order_review(
+    review_data: dict
+):
+    """Create a new review for an order
+    
+    Expected review_data format:
+    {
+        "user_id": str,
+        "order_id": str,
+        "rating": int,
+        "content": str,
+        "review_type": "service",
+        "extra": dict (optional)
+    }
+    """
+    try:
+        # Prepare the review data for the review service
+        review_request = {
+            "user_id": review_data["user_id"],
+            "review_type": "service",  # Fixed as service type for orders
+            "target_id": review_data["order_id"],
+            "rating": review_data["rating"],
+            "content": review_data.get("content", ""),
+            "extra": review_data.get("extra", {})
+        }
+        
+        return await make_request(
+            "POST",
+            f"{review_service_url}/reviews",
+            json=review_request
+        )
+    except Exception as e:
+        print(traceback.format_exc())
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to create review: {str(e)}"
+        )
+
+
