@@ -139,6 +139,7 @@ async def finish_order(
             MessageAttributes={
                 'event_type': {
                     'DataType': 'String',
+                    'StringValue': 'order_completed'
                 }
             }
         )
