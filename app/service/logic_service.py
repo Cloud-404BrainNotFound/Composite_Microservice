@@ -59,10 +59,8 @@ def make_sync_request(method: str, url: str, **kwargs):
 
 # Weather endpoint
 @logic_router.get("/weather")
-async def get_ny_weather(
-    # current_user: dict = Depends(get_current_user)
-    ):
-    """Get current weather in New York City"""
+async def get_ny_weather():
+    """Get current weather in New York City with HATEOAS links"""
     api_key = config['openweather']['api_key']
     city_id = config['openweather']['city_id']
     
@@ -70,12 +68,35 @@ async def get_ny_weather(
     
     try:
         weather_data = await make_request("GET", url)
-        return {
+        current_second = datetime.now().second
+        
+        # Base response with weather data
+        response = {
             "temperature": weather_data["main"]["temp"],
             "humidity": weather_data["main"]["humidity"],
             "description": weather_data["weather"][0]["description"],
-            "wind_speed": weather_data["wind"]["speed"]
+            "wind_speed": weather_data["wind"]["speed"],
+            "_links": {
+                "self": {
+                    "href": "/composite/weather"
+                }
+            }
         }
+        
+        # Add conditional links based on current seconds
+        if current_second % 2 == 0:
+            response["_links"]["more_info"] = {
+                "href": "https://weather.cnn.com/weather/forecast/new-york",
+                "title": "CNN Weather Forecast"
+            }
+        else:
+            response["_links"]["more_info"] = {
+                "href": "https://www.bbc.com/weather/5128581",
+                "title": "BBC Weather Forecast"
+            }
+            
+        return response
+        
     except Exception as e:
         print(traceback.format_exc())
         raise HTTPException(
