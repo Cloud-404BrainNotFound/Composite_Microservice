@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 from app.config.aws_config import sqs_client, SQS_QUEUE_URL
 from app.config.jwt_config import get_current_user
+from app.dependencies.logging_middleware import get_correlation_id
 
 # Read config
 config = configparser.ConfigParser()
@@ -17,6 +18,15 @@ order_service_url = config['services']['order']
 review_service_url = config['services']['review']
 
 async def make_request(method: str, url: str, **kwargs):
+    # Get correlation ID from context
+    correlation_id = get_correlation_id()
+    
+    # Add correlation ID to headers if it exists
+    if correlation_id:
+        headers = kwargs.get('headers', {})
+        headers['x-correlation-id'] = correlation_id
+        kwargs['headers'] = headers
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.request(method, url, **kwargs)
@@ -28,6 +38,15 @@ async def make_request(method: str, url: str, **kwargs):
             raise HTTPException(status_code=503, detail=f"Service unavailable: {str(e)}")
 
 def make_sync_request(method: str, url: str, **kwargs):
+    # Get correlation ID from context
+    correlation_id = get_correlation_id()
+    
+    # Add correlation ID to headers if it exists
+    if correlation_id:
+        headers = kwargs.get('headers', {})
+        headers['x-correlation-id'] = correlation_id
+        kwargs['headers'] = headers
+
     with httpx.Client() as client:
         try:
             response = client.request(method, url, **kwargs)
